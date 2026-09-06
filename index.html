@@ -14,9 +14,9 @@
     --ink:#E8EAF0;
     --ink-soft:#9298A8;
     --ink-faint:#5E6472;
-    --gold:#E3B34D;
-    --gold-dim: rgba(227,179,77,0.14);
-    --gold-deep:#B8862F;
+    --gold:#C4A05C;
+    --gold-dim: rgba(196,160,92,0.14);
+    --gold-deep:#9C7C3F;
     --special:#7C93C9;
     --special-dim: rgba(124,147,201,0.14);
     --radius:10px;
@@ -36,7 +36,6 @@
   }
   a{color:var(--gold);}
   .wrap{max-width:760px;margin:0 auto;padding:0 20px 80px;}
-  .wrap.wide{max-width:980px;}
 
   /* ---------- Masthead ---------- */
   .masthead{
@@ -325,111 +324,37 @@
     font-size:12px;
     color:var(--ink-faint);
   }
+  .items{display:flex;flex-direction:column;}
+  .item{
+    display:grid;
+    grid-template-columns:96px 1fr;
+    gap:14px;
+    align-items:baseline;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .items .item:last-child{border-bottom:none;}
+  .item.special{border-left:2px solid var(--special);padding-left:10px;}
+  .item .time{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-faint);
+    white-space:nowrap;
+  }
+  .item .what b{font-size:14px;font-weight:600;}
+  .item .what .meta{color:var(--ink-soft);font-size:12.5px;margin-left:8px;}
+  .item .what .faculty{color:var(--ink-faint);font-size:12px;margin-left:8px;}
+  .remark-banner{
+    font-size:12.5px;
+    color:var(--special);
+    font-style:italic;
+    margin-bottom:6px;
+  }
   .empty-note{
     color:var(--ink-soft);
     font-size:13px;
     padding:30px 0;
     text-align:center;
-  }
-
-  /* ---------- Timetable grid ---------- */
-  .table-wrap{
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-  }
-  table.tt{
-    border-collapse:separate;
-    border-spacing:0;
-    width:100%;
-    min-width:820px;
-    font-size:12.5px;
-  }
-  table.tt thead th{
-    position:sticky;
-    top:41px;
-    z-index:15;
-    background:var(--panel-2);
-    color:var(--ink-soft);
-    font-family:var(--mono);
-    font-weight:500;
-    font-size:11px;
-    padding:9px 8px;
-    text-align:left;
-    border-bottom:1px solid var(--line-strong);
-    white-space:nowrap;
-  }
-  table.tt thead th.day-col{
-    left:0;
-    z-index:25;
-  }
-  table.tt tbody tr.month-row td{
-    position:sticky;
-    top:70px;
-    z-index:12;
-    background:var(--bg);
-    font-family:var(--serif);
-    color:var(--gold);
-    font-weight:600;
-    font-size:13.5px;
-    padding:10px 10px 6px;
-    border-top:14px solid var(--bg);
-  }
-  table.tt tbody tr.day-tr{
-    scroll-margin-top:96px;
-  }
-  table.tt tbody tr.day-tr.today .day-col{
-    background:var(--gold-dim);
-  }
-  table.tt tbody tr.day-tr.today .day-col .dow,
-  table.tt tbody tr.day-tr.today .day-col .dnum{color:var(--gold);}
-  table.tt tbody td{
-    padding:8px;
-    vertical-align:top;
-    border-bottom:1px solid var(--line);
-    border-right:1px solid var(--line);
-  }
-  table.tt tbody td:last-child{border-right:none;}
-  table.tt td.day-col{
-    position:sticky;
-    left:0;
-    z-index:8;
-    background:var(--panel);
-    font-family:var(--serif);
-    min-width:78px;
-  }
-  table.tt td.day-col .dow{
-    font-size:10.5px;
-    text-transform:uppercase;
-    letter-spacing:0.05em;
-    color:var(--gold);
-    font-family:var(--mono);
-  }
-  table.tt td.day-col .dnum{font-size:18px;line-height:1.25;}
-  table.tt td.day-col .dmon{font-size:11px;color:var(--ink-faint);}
-  table.tt td.day-col .remark{
-    display:block;
-    margin-top:4px;
-    font-size:10px;
-    color:var(--special);
-    font-style:italic;
-    white-space:normal;
-    max-width:110px;
-  }
-  table.tt td.slot-cell{min-width:96px;}
-  .cell-item{margin-bottom:6px;}
-  .cell-item:last-child{margin-bottom:0;}
-  .cell-item .code{font-weight:600;color:var(--ink);}
-  .cell-item .gr{color:var(--ink-faint);font-size:11px;}
-  .cell-item .room{display:block;color:var(--ink-soft);font-size:10.5px;margin-top:1px;}
-  .cell-item .fac{display:none;color:var(--ink-faint);font-size:10px;}
-  body.show-faculty .cell-item .fac{display:block;}
-  .cell-item.special{
-    color:var(--special);
-    font-weight:600;
-    border-left:2px solid var(--special);
-    padding-left:6px;
   }
 
   footer.credit{
@@ -440,12 +365,14 @@
   }
 
   @media (max-width:560px){
+    .day-row{grid-template-columns:1fr;}
+    .item{grid-template-columns:1fr;}
     details.free-days .fd-list{column-count:2;}
   }
 </style>
 </head>
 <body>
-<div class="wrap wide">
+<div class="wrap">
 
   <div class="masthead">
     <p class="kicker">PGPM 2025–2027 · Batch T5</p>
