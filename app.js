@@ -214,7 +214,7 @@
     }).join(', ');
     document.getElementById('picksSummary').innerHTML = '<b>Your subjects:</b> ' + summary;
 
-    document.getElementById('result').style.display = '';
+    document.getElementById('result').style.display = 'block';
     document.getElementById('result').scrollIntoView({behavior:'smooth'});
   }
 
