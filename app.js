@@ -21,7 +21,9 @@
     var s = SUBJECTS[code];
     var chip = document.createElement('div');
     chip.className = 'chip' + (s.groups.length === 0 ? ' solo' : '');
-    chip.innerHTML = '<span class="code">' + code + '</span>';
+    var subLabel = s.groups.length === 0 ? 'No group split' : (s.groups.length + ' groups');
+    chip.innerHTML = '<span class="check">✓</span><span class="code">' + code + '</span>' +
+      '<span class="sub-line">' + subLabel + '</span>';
     chip.dataset.code = code;
     chip.addEventListener('click', function(){
       toggleSubject(code, chip);
@@ -158,11 +160,17 @@
         itemsWrap.appendChild(rb);
       }
 
+      var slotCounts = {};
+      day.items.forEach(function(it){
+        if(it.kind === 'class'){ slotCounts[it.slot] = (slotCounts[it.slot]||0)+1; }
+      });
+
       var itemsBox = document.createElement('div');
       itemsBox.className = 'items';
       day.items.forEach(function(it){
         var el = document.createElement('div');
-        el.className = 'item' + (it.kind === 'special' ? ' special' : '');
+        var isClash = it.kind === 'class' && slotCounts[it.slot] > 1;
+        el.className = 'item' + (it.kind === 'special' ? ' special' : '') + (isClash ? ' clash' : '');
         var time = SLOT_LABELS[it.slot];
         var whatHtml;
         if(it.kind === 'special'){
@@ -185,7 +193,14 @@
   // ---------- Free days ----------
   function renderFreeDays(personalDays){
     var list = document.getElementById('freeDaysList');
+    var summary = document.getElementById('freeDaysSummary');
     var free = personalDays.filter(function(d){ return d.items.length === 0; });
+    var weekend = free.filter(function(d){ return d.day === 'Sat' || d.day === 'Sun'; }).length;
+    var weekday = free.length - weekend;
+    if(summary){
+      summary.textContent = free.length + ' free day' + (free.length===1?'':'s') + ' this term' +
+        (free.length ? ' · ' + weekday + ' weekday' + (weekday===1?'':'s') + ' · ' + weekend + ' weekend' + (weekend===1?'':'s') : '');
+    }
     if(free.length === 0){
       list.innerHTML = '<div>No fully free academic days this term for your picks.</div>';
       return;
@@ -193,6 +208,81 @@
     list.innerHTML = free.map(function(d){
       return '<div>' + d.day + ' ' + d.date + '</div>';
     }).join('');
+  }
+
+  // ---------- Stats row ----------
+  function shortDate(dateStr){
+    // input DD-Mon-YYYY
+    var p = dateStr.split('-');
+    return p[1] + ' ' + parseInt(p[0],10);
+  }
+
+  function renderStats(personalDays){
+    var row = document.getElementById('statsRow');
+    var activeClasses = 0, classDays = 0;
+    personalDays.forEach(function(d){
+      var classItems = d.items.filter(function(it){ return it.kind === 'class'; });
+      if(d.items.length > 0) classDays++;
+      activeClasses += classItems.length;
+    });
+    var subjectsCount = Object.keys(state.selected).length;
+
+    // Determine class-period range vs end-term range using full DAYS
+    var endTermDates = [];
+    var classDates = [];
+    DAYS.forEach(function(d){
+      var hasEndTerm = d.items.some(function(it){ return it.kind==='special' && /End-Term/i.test(it.label||''); });
+      if(hasEndTerm){ endTermDates.push(d.date); }
+      else { classDates.push(d.date); }
+    });
+    var classRangeStr = classDates.length ? (shortDate(classDates[0]) + ' – ' + shortDate(classDates[classDates.length-1])) : '—';
+    var endTermRangeStr = endTermDates.length ? (shortDate(endTermDates[0]) + ' – ' + shortDate(endTermDates[endTermDates.length-1])) : '—';
+
+    row.innerHTML =
+      '<div class="stat-card"><div class="num">' + activeClasses + '</div><div class="lbl">Active classes</div></div>' +
+      '<div class="stat-card"><div class="num">' + classDays + '</div><div class="lbl">Class days</div></div>' +
+      '<div class="stat-card"><div class="num">' + subjectsCount + '</div><div class="lbl">Subjects</div></div>' +
+      '<div class="stat-card"><div class="num small">' + classRangeStr + '</div><div class="lbl">Classes</div></div>' +
+      '<div class="stat-card"><div class="num small">' + endTermRangeStr + '</div><div class="lbl">End-terms</div></div>';
+  }
+
+  // ---------- Clash detection ----------
+  function renderClashBanner(personalDays){
+    var el = document.getElementById('clashBanner');
+    var clashDays = [];
+    personalDays.forEach(function(d){
+      var classItems = d.items.filter(function(it){ return it.kind === 'class'; });
+      var bySlot = {};
+      classItems.forEach(function(it){
+        bySlot[it.slot] = (bySlot[it.slot] || 0) + 1;
+      });
+      var hasClash = Object.keys(bySlot).some(function(k){ return bySlot[k] > 1; });
+      if(hasClash) clashDays.push(d);
+    });
+    if(clashDays.length === 0){
+      el.innerHTML = '<div class="clash-banner">✓ No time clashes detected — your combination is clean</div>';
+    } else {
+      el.innerHTML = '<div class="clash-banner bad">⚠ Time clash on ' + clashDays.length + ' day' + (clashDays.length===1?'':'s') +
+        ' — check ' + clashDays.map(function(d){return d.day + ' ' + d.date;}).join(', ') + '</div>';
+    }
+  }
+
+  // ---------- Exam info ----------
+  function renderExamCard(){
+    var el = document.getElementById('examCard');
+    var endTermDates = [];
+    DAYS.forEach(function(d){
+      var hasEndTerm = d.items.some(function(it){ return it.kind==='special' && /End-Term/i.test(it.label||''); });
+      if(hasEndTerm) endTermDates.push(d);
+    });
+    if(endTermDates.length === 0){ el.style.display='none'; return; }
+    el.style.display = '';
+    var first = endTermDates[0], last = endTermDates[endTermDates.length-1];
+    el.innerHTML =
+      '<div class="ex-title">📝 End-Term Exams</div>' +
+      '<p>Term V end-terms run <b>' + first.day + ' ' + first.date + ' – ' + last.day + ' ' + last.date + '</b>.' +
+      ' The subject-wise date sheet has not been released yet, so per-subject dates are not shown.</p>' +
+      '<p class="ex-note">Your exam dates will appear here once the official schedule is added.</p>';
   }
 
   // ---------- Generate ----------
@@ -203,6 +293,9 @@
     lastPersonalDays = personalDays;
     renderAgenda(personalDays);
     renderFreeDays(personalDays);
+    renderStats(personalDays);
+    renderClashBanner(personalDays);
+    renderExamCard();
 
     var codes = Object.keys(state.selected).sort();
     var summary = codes.map(function(c){
@@ -311,6 +404,16 @@
     }
   }
 
+  function relTime(ts){
+    var diff = Date.now() - ts;
+    var min = Math.floor(diff/60000);
+    if(min < 1) return 'just now';
+    if(min < 60) return min + 'm ago';
+    var hr = Math.floor(min/60);
+    if(hr < 24) return hr + 'h ago';
+    return Math.floor(hr/24) + 'd ago';
+  }
+
   function renderSavedCombos(){
     var box = document.getElementById('savedBox');
     var combos = loadCombos();
@@ -319,6 +422,7 @@
     combos.forEach(function(c, idx){
       html += '<div class="saved-item">' +
         '<span>' + c.label + '</span>' +
+        '<span class="ts">' + relTime(c.ts) + '</span>' +
         '<button data-idx="'+idx+'" class="load">Load</button>' +
         '<button data-idx="'+idx+'" class="del">Remove</button>' +
         '</div>';
