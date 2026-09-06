@@ -21,10 +21,7 @@
     var s = SUBJECTS[code];
     var chip = document.createElement('div');
     chip.className = 'chip' + (s.groups.length === 0 ? ' solo' : '');
-    var facList = Object.values(s.faculty).filter(Boolean);
-    var fac = facList.length ? facList[0] : '';
-    chip.innerHTML = '<span class="code">' + code + '</span>' +
-      (fac ? ' <span class="fac">[' + fac + ']</span>' : '');
+    chip.innerHTML = '<span class="code">' + code + '</span>';
     chip.dataset.code = code;
     chip.addEventListener('click', function(){
       toggleSubject(code, chip);
@@ -74,9 +71,9 @@
       s.groups.forEach(function(g){
         var pill = document.createElement('div');
         pill.className = 'radio-pill' + (state.groupPick[code] === g ? ' on' : '');
-        var fac = s.faculty[g] || '';
         var room = s.room[g] || '';
-        pill.textContent = 'Gr.' + g + (fac ? ' [' + fac + ']' : '') + (room ? ' · ' + room : '');
+        pill.innerHTML = '<span class="gnum">Group ' + g + '</span>' +
+          (room ? '<span class="groom">' + room + '</span>' : '');
         pill.addEventListener('click', function(){
           state.groupPick[code] = g;
           renderGroupStep();
@@ -171,10 +168,10 @@
         if(it.kind === 'special'){
           whatHtml = '<b>' + it.label + '</b>';
         } else {
-          var s = SUBJECTS[it.subject];
-          var groupStr = it.group ? ' Gr.' + it.group : '';
+          var groupStr = it.group ? ' · Gr.' + it.group : '';
           whatHtml = '<b>' + it.subject + groupStr + '</b>' +
-            '<span class="meta">' + (it.faculty ? '[' + it.faculty + '] ' : '') + (it.room || '') + '</span>';
+            (it.room ? '<span class="meta">' + it.room + '</span>' : '') +
+            (it.faculty ? '<span class="faculty">' + it.faculty + '</span>' : '');
         }
         el.innerHTML = '<div class="time">' + time + '</div><div class="what">' + whatHtml + '</div>';
         itemsBox.appendChild(el);
@@ -359,6 +356,16 @@
     renderGroupStep();
     renderGenerateState();
     generateSchedule();
+  }
+
+  // ---------- Faculty visibility toggle ----------
+  var facultyToggle = document.getElementById('facultyToggle');
+  if(facultyToggle){
+    facultyToggle.addEventListener('click', function(){
+      var on = document.body.classList.toggle('show-faculty');
+      facultyToggle.classList.toggle('on', on);
+      facultyToggle.setAttribute('aria-checked', on ? 'true' : 'false');
+    });
   }
 
   renderSavedCombos();
