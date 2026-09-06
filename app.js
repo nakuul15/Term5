@@ -149,63 +149,88 @@
     var monthChips = [];
     var todayRowEl = null;
 
+    var wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    var table = document.createElement('table');
+    table.className = 'tt';
+
+    var thead = document.createElement('thead');
+    var htr = document.createElement('tr');
+    var dayTh = document.createElement('th');
+    dayTh.className = 'day-col';
+    dayTh.textContent = 'Day';
+    htr.appendChild(dayTh);
+    SLOT_24H.forEach(function(t){
+      var th = document.createElement('th');
+      th.textContent = t[0] + '–' + t[1];
+      htr.appendChild(th);
+    });
+    thead.appendChild(htr);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+
     withItems.forEach(function(day){
       var dParts = day.date.split('-'); // DD-Mon-YYYY
       var monthKey = day.iso.slice(0,7); // YYYY-MM
-      var anchorId = 'month-' + monthKey;
 
       if(!seenMonths[monthKey]){
         seenMonths[monthKey] = true;
-        var mh = document.createElement('div');
-        mh.className = 'month-header';
-        mh.id = anchorId;
-        mh.textContent = MONTHS_SHORT[dParts[1]] + ' ' + dParts[2];
-        agenda.appendChild(mh);
-        monthChips.push({id: anchorId, label: MONTHS_SHORT[dParts[1]] + ' ' + dParts[2]});
+        var mRow = document.createElement('tr');
+        mRow.className = 'month-row';
+        mRow.id = 'month-' + monthKey;
+        var mTd = document.createElement('td');
+        mTd.colSpan = SLOT_24H.length + 1;
+        mTd.textContent = MONTHS_SHORT[dParts[1]] + ' ' + dParts[2];
+        mRow.appendChild(mTd);
+        tbody.appendChild(mRow);
+        monthChips.push({id: mRow.id, label: MONTHS_SHORT[dParts[1]] + ' ' + dParts[2]});
       }
 
-      var row = document.createElement('div');
-      row.className = 'day-row' + (day.iso === today ? ' today' : '');
-      if(day.iso === today){ todayRowEl = row; }
+      var tr = document.createElement('tr');
+      tr.className = 'day-tr' + (day.iso === today ? ' today' : '');
+      if(day.iso === today){ todayRowEl = tr; }
 
-      var label = document.createElement('div');
-      label.className = 'day-label';
-      label.innerHTML = '<div class="dow">' + day.day + '</div>' +
+      var dayTd = document.createElement('td');
+      dayTd.className = 'day-col';
+      dayTd.innerHTML = '<div class="dow">' + day.day + '</div>' +
         '<div class="dnum">' + dParts[0] + '</div>' +
-        '<div class="dmon">' + dParts[1] + ' ' + dParts[2] + '</div>';
-      row.appendChild(label);
+        '<div class="dmon">' + dParts[1] + ' ' + dParts[2] + '</div>' +
+        (day.remarks && day.remarks.length ? '<span class="remark">' + day.remarks.join(' · ') + '</span>' : '');
+      tr.appendChild(dayTd);
 
-      var itemsWrap = document.createElement('div');
+      // one cell per slot
+      var bySlot = {};
+      day.items.forEach(function(it){
+        (bySlot[it.slot] = bySlot[it.slot] || []).push(it);
+      });
 
-      if(day.remarks && day.remarks.length){
-        var rb = document.createElement('div');
-        rb.className = 'remark-banner';
-        rb.textContent = day.remarks.join(' · ');
-        itemsWrap.appendChild(rb);
+      for(var s = 0; s < SLOT_24H.length; s++){
+        var td = document.createElement('td');
+        td.className = 'slot-cell';
+        var itemsHere = bySlot[s];
+        if(itemsHere){
+          td.innerHTML = itemsHere.map(function(it){
+            if(it.kind === 'special'){
+              return '<div class="cell-item special">' + it.label + '</div>';
+            }
+            var groupStr = it.group ? ' <span class="gr">Gr.' + it.group + '</span>' : '';
+            return '<div class="cell-item">' +
+              '<span class="code">' + it.subject + '</span>' + groupStr +
+              (it.room ? '<span class="room">' + it.room + '</span>' : '') +
+              (it.faculty ? '<span class="fac">' + it.faculty + '</span>' : '') +
+              '</div>';
+          }).join('');
+        }
+        tr.appendChild(td);
       }
 
-      var itemsBox = document.createElement('div');
-      itemsBox.className = 'items';
-      day.items.forEach(function(it){
-        var el = document.createElement('div');
-        el.className = 'item' + (it.kind === 'special' ? ' special' : '');
-        var time = SLOT_LABELS[it.slot];
-        var whatHtml;
-        if(it.kind === 'special'){
-          whatHtml = '<b>' + it.label + '</b>';
-        } else {
-          var groupStr = it.group ? ' · Gr.' + it.group : '';
-          whatHtml = '<b>' + it.subject + groupStr + '</b>' +
-            (it.room ? '<span class="meta">' + it.room + '</span>' : '') +
-            (it.faculty ? '<span class="faculty">' + it.faculty + '</span>' : '');
-        }
-        el.innerHTML = '<div class="time">' + time + '</div><div class="what">' + whatHtml + '</div>';
-        itemsBox.appendChild(el);
-      });
-      itemsWrap.appendChild(itemsBox);
-      row.appendChild(itemsWrap);
-      agenda.appendChild(row);
+      tbody.appendChild(tr);
     });
+
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    agenda.appendChild(wrap);
 
     // Build the month quick-jump nav
     if(todayRowEl){
@@ -213,7 +238,7 @@
       todayBtn.className = 'today-btn';
       todayBtn.textContent = '● Today';
       todayBtn.addEventListener('click', function(){
-        todayRowEl.scrollIntoView({behavior:'smooth', block:'start'});
+        todayRowEl.scrollIntoView({behavior:'smooth', block:'center'});
       });
       monthNav.appendChild(todayBtn);
     }
