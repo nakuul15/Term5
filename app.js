@@ -129,18 +129,44 @@
   // ---------- Render agenda ----------
   var MONTHS_SHORT = {Jan:'Jan',Feb:'Feb',Mar:'Mar',Apr:'Apr',May:'May',Jun:'Jun',Jul:'Jul',Aug:'Aug',Sep:'Sep',Oct:'Oct',Nov:'Nov',Dec:'Dec'};
 
+  function todayISO(){
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+  }
+
   function renderAgenda(personalDays){
     var agenda = document.getElementById('agenda');
+    var monthNav = document.getElementById('monthNav');
     agenda.innerHTML = '';
+    monthNav.innerHTML = '';
     var withItems = personalDays.filter(function(d){return d.items.length>0;});
     if(withItems.length === 0){
       agenda.innerHTML = '<p class="empty-note">Nothing on your schedule yet — go back and pick your electives.</p>';
       return;
     }
+    var today = todayISO();
+    var seenMonths = {};
+    var monthChips = [];
+    var todayRowEl = null;
+
     withItems.forEach(function(day){
       var dParts = day.date.split('-'); // DD-Mon-YYYY
+      var monthKey = day.iso.slice(0,7); // YYYY-MM
+      var anchorId = 'month-' + monthKey;
+
+      if(!seenMonths[monthKey]){
+        seenMonths[monthKey] = true;
+        var mh = document.createElement('div');
+        mh.className = 'month-header';
+        mh.id = anchorId;
+        mh.textContent = MONTHS_SHORT[dParts[1]] + ' ' + dParts[2];
+        agenda.appendChild(mh);
+        monthChips.push({id: anchorId, label: MONTHS_SHORT[dParts[1]] + ' ' + dParts[2]});
+      }
+
       var row = document.createElement('div');
-      row.className = 'day-row';
+      row.className = 'day-row' + (day.iso === today ? ' today' : '');
+      if(day.iso === today){ todayRowEl = row; }
 
       var label = document.createElement('div');
       label.className = 'day-label';
@@ -179,6 +205,25 @@
       itemsWrap.appendChild(itemsBox);
       row.appendChild(itemsWrap);
       agenda.appendChild(row);
+    });
+
+    // Build the month quick-jump nav
+    if(todayRowEl){
+      var todayBtn = document.createElement('button');
+      todayBtn.className = 'today-btn';
+      todayBtn.textContent = '● Today';
+      todayBtn.addEventListener('click', function(){
+        todayRowEl.scrollIntoView({behavior:'smooth', block:'start'});
+      });
+      monthNav.appendChild(todayBtn);
+    }
+    monthChips.forEach(function(m){
+      var btn = document.createElement('button');
+      btn.textContent = m.label;
+      btn.addEventListener('click', function(){
+        document.getElementById(m.id).scrollIntoView({behavior:'smooth', block:'start'});
+      });
+      monthNav.appendChild(btn);
     });
   }
 
