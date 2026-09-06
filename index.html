@@ -14,9 +14,9 @@
     --ink:#E8EAF0;
     --ink-soft:#9298A8;
     --ink-faint:#5E6472;
-    --gold:#E3B34D;
-    --gold-dim: rgba(227,179,77,0.14);
-    --gold-deep:#B8862F;
+    --gold:#C4A05C;
+    --gold-dim: rgba(196,160,92,0.14);
+    --gold-deep:#9C7C3F;
     --special:#7C93C9;
     --special-dim: rgba(124,147,201,0.14);
     --radius:10px;
@@ -248,6 +248,54 @@
   details.free-days .fd-list{margin-top:10px;column-count:3;column-gap:24px;}
   details.free-days .fd-list div{font-family:var(--mono);font-size:12px;color:var(--ink-soft);break-inside:avoid;padding:2px 0;}
 
+  /* ---------- Month quick-jump nav ---------- */
+  .month-nav{
+    position:sticky;
+    top:0;
+    z-index:20;
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    padding:10px 0;
+    margin-bottom:4px;
+    background:var(--bg);
+    border-bottom:1px solid var(--line-strong);
+    scrollbar-width:none;
+  }
+  .month-nav::-webkit-scrollbar{display:none;}
+  .month-nav button{
+    font-family:var(--mono);
+    font-size:12px;
+    white-space:nowrap;
+    background:var(--panel-2);
+    color:var(--ink-soft);
+    border:1px solid var(--line-strong);
+    border-radius:999px;
+    padding:6px 13px;
+    cursor:pointer;
+    flex:none;
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .month-nav button:hover{border-color:var(--gold);color:var(--ink);}
+  .month-nav button.today-btn{
+    color:var(--gold);
+    border-color:var(--gold);
+  }
+
+  /* ---------- Sticky month divider within the list ---------- */
+  .month-header{
+    position:sticky;
+    top:47px;
+    z-index:10;
+    background:var(--bg);
+    padding:10px 0 8px;
+    font-family:var(--serif);
+    font-size:15px;
+    font-weight:600;
+    color:var(--gold);
+    border-bottom:1px solid var(--line);
+  }
+
   .day-row{
     border-top:1px solid var(--line);
     padding:16px 0;
@@ -255,6 +303,7 @@
     grid-template-columns:74px 1fr;
     gap:16px;
   }
+  .day-row.today .dnum, .day-row.today .dow{color:var(--gold);}
   .day-row:first-child{border-top:none;}
   .day-row .day-label{
     font-family:var(--serif);
@@ -366,6 +415,8 @@
       <summary>Free days on your schedule (among days with institute activity)</summary>
       <div class="fd-list" id="freeDaysList"></div>
     </details>
+
+    <nav class="month-nav" id="monthNav"></nav>
 
     <div id="agenda"></div>
   </section>
