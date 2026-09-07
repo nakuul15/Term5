@@ -226,49 +226,6 @@
   }
   .radio-pill.on .groom{color:var(--gold);}
 
-  /* ---------- Group cards (matches reference design: white/cream rows) ---------- */
-  .group-card-list{display:flex; flex-direction:column; gap:10px; animation:fadeInUp .35s var(--ease-soft) both;}
-  .group-card{
-    background:#FBFAF6;
-    border-radius:16px;
-    padding:16px 20px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:12px;
-    box-shadow:0 1px 2px rgba(0,0,0,0.05);
-  }
-  .group-card .gc-name{
-    font-family:var(--serif);
-    font-weight:700;
-    font-size:15px;
-  }
-  .group-card .gc-note{
-    color:#726C5E;
-    font-size:13px;
-  }
-  .group-card .gc-pills{display:flex; gap:8px; flex-wrap:wrap;}
-  .gc-pill{
-    background:#EDE7DA;
-    border:1.5px solid transparent;
-    border-radius:999px;
-    padding:6px 14px;
-    font-family:var(--mono);
-    font-size:12.5px;
-    color:#4A4536;
-    cursor:pointer;
-    transition:background .15s var(--ease-soft), border-color .15s var(--ease-soft), color .15s var(--ease-soft), transform .15s var(--ease);
-  }
-  .gc-pill:hover{background:#E2DBC9; transform:translateY(-1px);}
-  .gc-pill.on{
-    background:#FFFFFF;
-    border-color:var(--gold-deep);
-    color:var(--gold-deep);
-    font-weight:700;
-    box-shadow:0 2px 8px -4px rgba(169,127,53,0.5);
-  }
-
   .actions{margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
   button.primary{
     font-family:var(--sans);
@@ -406,16 +363,16 @@
     border-color:#D8B98D;
     color:#5A3A1B;
   }
-  .freedays-content{display:flex; flex-direction:column; gap:10px;}
   .freedays-list{
     background:#F5F2E8;
     border-radius:14px;
     padding:14px 18px;
-    display:block;
+    display:none;
     column-count:3;
     column-gap:22px;
     animation:fadeIn .3s var(--ease-soft) both;
   }
+  .freedays-list.open{display:block;}
   .freedays-list div{
     font-family:var(--mono);
     font-size:12px;
@@ -661,7 +618,7 @@
 
   <section class="step" id="groupStep" style="display:none;">
     <h2><span class="n">2</span> Pick your group</h2>
-    <p class="hint">One card per subject you picked — choose a section where more than one runs.</p>
+    <p class="hint">Only shown for subjects that run in parallel sections.</p>
     <div id="groupGrid"></div>
   </section>
 
@@ -692,18 +649,10 @@
       <div id="examList"></div>
     </section>
 
-    <div class="stat-panel">
-      <div class="pill-banner" id="freeDaysBanner" role="button" tabindex="0">
-        <span id="freeDaysBannerText">Free days on your schedule</span>
-        <span class="chevron">▾</span>
-      </div>
-      <div class="freedays-content" id="freeDaysContent" style="display:none;">
-        <div class="stats-white-card" id="freeDaysStats"></div>
-        <div class="freedays-list" id="freeDaysList"></div>
-      </div>
-    </div>
-
-    <div class="pill-banner clash-pill" id="clashPill"></div>
+    <details class="free-days" id="freeDaysBox">
+      <summary>Free days on your schedule (among days with institute activity)</summary>
+      <div class="fd-list" id="freeDaysList"></div>
+    </details>
 
     <nav class="month-nav" id="monthNav"></nav>
 
