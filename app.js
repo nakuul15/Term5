@@ -6,7 +6,6 @@
   var DAYS = DATA.days;
   var SLOT_LABELS = DATA.slotLabels;
   var SLOT_24H = DATA.slot24h;
-  var EXAM_SCHEDULE = DATA.examSchedule || [];
   var STORE_KEY = 'iimt_t5_timetables_v1';
 
   var subjectCodes = Object.keys(SUBJECTS).sort();
@@ -243,66 +242,6 @@
     }).join('');
   }
 
-  // ---------- Stats (total / remaining classes) ----------
-  function renderStats(personalDays){
-    var today = todayISO();
-    var total = 0, left = 0;
-    personalDays.forEach(function(day){
-      day.items.forEach(function(it){
-        if(it.kind !== 'class') return;
-        total++;
-        if(day.iso >= today) left++;
-      });
-    });
-    var bar = document.getElementById('statsBar');
-    bar.innerHTML =
-      '<div class="stat"><div class="num">' + total + '</div><div class="lbl">total classes</div></div>' +
-      '<div class="stat attention"><div class="num">' + left + '</div><div class="lbl">classes left</div></div>';
-  }
-
-  // ---------- Exam timetable (auto-updates whenever examSchedule data is filled in) ----------
-  function renderExamSection(){
-    var badge = document.getElementById('examBadge');
-    var listEl = document.getElementById('examList');
-    var codes = state.selected;
-
-    var relevant = EXAM_SCHEDULE.filter(function(ex){
-      return !ex.subject || codes[ex.subject];
-    }).slice().sort(function(a,b){
-      return (a.iso || '').localeCompare(b.iso || '');
-    });
-
-    if(EXAM_SCHEDULE.length === 0){
-      badge.textContent = 'Not published yet';
-      badge.className = 'exam-badge pending';
-      listEl.innerHTML = '<div class="exam-empty">The exam timetable hasn\'t been released yet — this section will fill in automatically once it is.</div>';
-      return;
-    }
-
-    if(relevant.length === 0){
-      badge.textContent = EXAM_SCHEDULE.length + ' published';
-      badge.className = 'exam-badge';
-      listEl.innerHTML = '<div class="exam-empty">No published exams match your selected subjects yet.</div>';
-      return;
-    }
-
-    badge.textContent = relevant.length + (relevant.length === 1 ? ' exam' : ' exams');
-    badge.className = 'exam-badge';
-    listEl.innerHTML = '<div class="exam-list">' + relevant.map(function(ex){
-      var whatBits = [];
-      if(ex.subject) whatBits.push('<b>' + ex.subject + '</b>');
-      else whatBits.push('<b>' + (ex.label || 'Exam') + '</b>');
-      var metaBits = [];
-      if(ex.time) metaBits.push(ex.time);
-      if(ex.room) metaBits.push(ex.room);
-      var meta = metaBits.length ? '<span class="meta">' + metaBits.join(' · ') + '</span>' : '';
-      return '<div class="exam-item">' +
-        '<div class="exam-date">' + (ex.day ? ex.day + ' ' : '') + (ex.date || '') + '</div>' +
-        '<div class="exam-what">' + whatBits.join('') + meta + '</div>' +
-        '</div>';
-    }).join('') + '</div>';
-  }
-
   // ---------- Generate ----------
   var lastPersonalDays = null;
 
@@ -311,8 +250,6 @@
     lastPersonalDays = personalDays;
     renderAgenda(personalDays);
     renderFreeDays(personalDays);
-    renderStats(personalDays);
-    renderExamSection();
 
     var codes = Object.keys(state.selected).sort();
     var summary = codes.map(function(c){
