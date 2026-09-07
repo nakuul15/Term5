@@ -11,20 +11,6 @@
 
   var subjectCodes = Object.keys(SUBJECTS).sort();
 
-  var LIGHT_PALETTE = [
-    '#C1521B', '#3F7D4F', '#B33F3F', '#5B4B9E', '#2E6E8E',
-    '#9C6B14', '#7A3E9D', '#1F6F5C', '#A6431B', '#4A5FA5'
-  ];
-  var colorCache = {};
-  function subjectColor(code){
-    if(colorCache[code]) return colorCache[code];
-    var h = 0;
-    for(var i=0;i<code.length;i++){ h = (h*31 + code.charCodeAt(i)) >>> 0; }
-    var c = LIGHT_PALETTE[h % LIGHT_PALETTE.length];
-    colorCache[code] = c;
-    return c;
-  }
-
   var state = {
     selected: {},   // subject -> true
     groupPick: {}   // subject -> group string (only for multi-group subjects)
@@ -63,56 +49,43 @@
   var groupGrid = document.getElementById('groupGrid');
 
   function renderGroupStep(){
-    var codes = Object.keys(state.selected).sort();
+    var multi = Object.keys(state.selected).filter(function(c){
+      return SUBJECTS[c].groups.length > 0;
+    }).sort();
 
-    if(codes.length === 0){
+    if(multi.length === 0){
       groupStep.style.display = 'none';
       groupGrid.innerHTML = '';
       return;
     }
     groupStep.style.display = '';
     groupGrid.innerHTML = '';
-
-    var list = document.createElement('div');
-    list.className = 'group-card-list';
-
-    codes.forEach(function(code){
+    multi.forEach(function(code){
       var s = SUBJECTS[code];
-      var color = subjectColor(code);
-      var card = document.createElement('div');
-      card.className = 'group-card';
-
-      var name = document.createElement('div');
-      name.className = 'gc-name';
-      name.style.color = color;
-      name.textContent = code;
-      card.appendChild(name);
-
-      if(s.groups.length === 0){
-        var note = document.createElement('div');
-        note.className = 'gc-note';
-        note.textContent = 'Single group — auto assigned';
-        card.appendChild(note);
-      } else {
-        var pillsWrap = document.createElement('div');
-        pillsWrap.className = 'gc-pills';
-        s.groups.forEach(function(g){
-          var pill = document.createElement('span');
-          pill.className = 'gc-pill' + (state.groupPick[code] === g ? ' on' : '');
-          pill.textContent = 'Gr.' + g;
-          pill.addEventListener('click', function(){
-            state.groupPick[code] = g;
-            renderGroupStep();
-            renderGenerateState();
-          });
-          pillsWrap.appendChild(pill);
+      var block = document.createElement('div');
+      block.className = 'group-block';
+      var title = document.createElement('div');
+      title.className = 'gb-title';
+      title.innerHTML = '<span class="code">' + code + '</span> — choose a section';
+      block.appendChild(title);
+      var row = document.createElement('div');
+      row.className = 'radio-row';
+      s.groups.forEach(function(g){
+        var pill = document.createElement('div');
+        pill.className = 'radio-pill' + (state.groupPick[code] === g ? ' on' : '');
+        var room = s.room[g] || '';
+        pill.innerHTML = '<span class="gnum">Group ' + g + '</span>' +
+          (room ? '<span class="groom">' + room + '</span>' : '');
+        pill.addEventListener('click', function(){
+          state.groupPick[code] = g;
+          renderGroupStep();
+          renderGenerateState();
         });
-        card.appendChild(pillsWrap);
-      }
-      list.appendChild(card);
+        row.appendChild(pill);
+      });
+      block.appendChild(row);
+      groupGrid.appendChild(block);
     });
-
-    groupGrid.appendChild(list);
   }
 
   // ---------- Generate button state ----------
@@ -259,65 +232,15 @@
 
   // ---------- Free days ----------
   function renderFreeDays(personalDays){
-    var bannerText = document.getElementById('freeDaysBannerText');
-    var statsBox = document.getElementById('freeDaysStats');
     var list = document.getElementById('freeDaysList');
     var free = personalDays.filter(function(d){ return d.items.length === 0; });
-    var weekend = free.filter(function(d){ return d.day === 'Sat' || d.day === 'Sun'; }).length;
-    var weekday = free.length - weekend;
-
-    bannerText.textContent = '📅 ' + free.length + ' Free Day' + (free.length===1?'':'s') +
-      ' this term · ' + weekday + ' weekday' + (weekday===1?'':'s') +
-      ' · ' + weekend + ' weekend' + (weekend===1?'':'s');
-
-    statsBox.innerHTML =
-      '<div class="stat"><div class="num">' + free.length + '</div><div class="lbl">total free days</div></div>' +
-      '<div class="stat"><div class="num">' + weekday + '</div><div class="lbl">free weekdays</div></div>' +
-      '<div class="stat"><div class="num">' + weekend + '</div><div class="lbl">free weekends</div></div>';
-
     if(free.length === 0){
       list.innerHTML = '<div>No fully free academic days this term for your picks.</div>';
       return;
     }
     list.innerHTML = free.map(function(d){
-      var parts = d.date.split('-');
-      return '<div>' + parts[0] + ' ' + parts[1] + '&nbsp;&nbsp;<b>' + d.day + '</b></div>';
+      return '<div>' + d.day + ' ' + d.date + '</div>';
     }).join('');
-  }
-
-  // ---------- Clash pill ----------
-  function renderClashPill(personalDays){
-    var el = document.getElementById('clashPill');
-    if(!el) return;
-    var clashDays = [];
-    personalDays.forEach(function(d){
-      var classItems = d.items.filter(function(it){ return it.kind === 'class'; });
-      var bySlot = {};
-      classItems.forEach(function(it){ bySlot[it.slot] = (bySlot[it.slot]||0) + 1; });
-      if(Object.keys(bySlot).some(function(k){ return bySlot[k] > 1; })){ clashDays.push(d); }
-    });
-    if(clashDays.length === 0){
-      el.classList.remove('has-clash');
-      el.innerHTML = '✓ No time clashes detected — your combination is clean';
-    } else {
-      el.classList.add('has-clash');
-      el.innerHTML = '⚠ Time clash on ' + clashDays.length + ' day' + (clashDays.length===1?'':'s') +
-        ' — check ' + clashDays.map(function(d){return d.day + ' ' + d.date;}).join(', ');
-    }
-  }
-
-  // ---------- Free-days panel toggle (click to expand) ----------
-  var freeDaysBanner = document.getElementById('freeDaysBanner');
-  var freeDaysContent = document.getElementById('freeDaysContent');
-  function toggleFreeDaysPanel(){
-    var isOpen = freeDaysBanner.classList.toggle('open');
-    freeDaysContent.style.display = isOpen ? 'flex' : 'none';
-  }
-  if(freeDaysBanner){
-    freeDaysBanner.addEventListener('click', toggleFreeDaysPanel);
-    freeDaysBanner.addEventListener('keydown', function(e){
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleFreeDaysPanel(); }
-    });
   }
 
   // ---------- Stats (total / remaining classes) ----------
@@ -390,7 +313,6 @@
     renderFreeDays(personalDays);
     renderStats(personalDays);
     renderExamSection();
-    renderClashPill(personalDays);
 
     var codes = Object.keys(state.selected).sort();
     var summary = codes.map(function(c){
