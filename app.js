@@ -17,12 +17,13 @@
 
   // ---------- Step 1: subject chips ----------
   var grid = document.getElementById('subjectGrid');
-  subjectCodes.forEach(function(code){
+  subjectCodes.forEach(function(code, idx){
     var s = SUBJECTS[code];
     var chip = document.createElement('div');
     chip.className = 'chip' + (s.groups.length === 0 ? ' solo' : '');
     chip.innerHTML = '<span class="code">' + code + '</span>';
     chip.dataset.code = code;
+    chip.style.setProperty('--i', idx);
     chip.addEventListener('click', function(){
       toggleSubject(code, chip);
     });
@@ -149,7 +150,7 @@
     var monthChips = [];
     var todayRowEl = null;
 
-    withItems.forEach(function(day){
+    withItems.forEach(function(day, dayIdx){
       var dParts = day.date.split('-'); // DD-Mon-YYYY
       var monthKey = day.iso.slice(0,7); // YYYY-MM
       var anchorId = 'month-' + monthKey;
@@ -166,6 +167,7 @@
 
       var row = document.createElement('div');
       row.className = 'day-row' + (day.iso === today ? ' today' : '');
+      row.style.setProperty('--i', dayIdx);
       if(day.iso === today){ todayRowEl = row; }
 
       var label = document.createElement('div');
@@ -256,8 +258,12 @@
     }).join(', ');
     document.getElementById('picksSummary').innerHTML = '<b>Your subjects:</b> ' + summary;
 
-    document.getElementById('result').style.display = 'block';
-    document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    var resultEl = document.getElementById('result');
+    resultEl.style.display = 'block';
+    resultEl.classList.remove('showing');
+    void resultEl.offsetWidth; // restart animation on repeat generates
+    resultEl.classList.add('showing');
+    resultEl.scrollIntoView({behavior:'smooth'});
   }
 
   // ---------- ICS export ----------
